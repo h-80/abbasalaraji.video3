@@ -69,10 +69,10 @@ html,body{
 
 <script>
 const channelsData = `
-https://www.youtube.com/shorts/hpVtQjla9_c
 https://www.youtube.com/shorts/hcjoqVCqKbc
 https://www.youtube.com/shorts/UfTCtmOZd7o
 https://www.youtube.com/shorts/qSeEjuamYdY
+
 `;
 
 function getYouTubeId(url) {
@@ -188,9 +188,19 @@ videoIds.forEach((ytId, index) => {
 });
 
 window.addEventListener('load', () => {
+  // منع العودة إلى الصفحة السابقة
+  window.history.pushState(null, '', window.location.href);
+  
   if (videoIds.length > 0) {
     playVideo(0);
   }
+});
+
+window.addEventListener('popstate', () => {
+  // عند محاولة الرجوع بزر Back، أغلق النافذة أو أعد التوجيه
+  window.history.pushState(null, '', window.location.href);
+  window.close();
+  // أو يمكن استخدام: window.location.href = 'about:blank';
 });
 
 window.addEventListener('visibilitychange', () => {
