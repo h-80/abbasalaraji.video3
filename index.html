@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الرادود عباس الأعرجي</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap');
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  font-family:'Cairo',sans-serif;
+  background:#000;
+}
+
+#playerPage{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  height:100vh;
+  background:#000;
+  display:block;
+  z-index:9999;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  scroll-snap-type:y mandatory;
+}
+
+.video-container{
+  width:100%;
+  height:100vh;
+  scroll-snap-align:start;
+  position:relative;
+  background:#000;
+}
+
+.video-container iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  position:relative;
+  z-index:1;
+}
+
+.video-container .poster{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:2;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="playerPage"></div>
+
+<script>
+const channelsData = `
+https://www.youtube.com/shorts/hcjoqVCqKbc
+https://www.youtube.com/shorts/UfTCtmOZd7o
+https://www.youtube.com/shorts/qSeEjuamYdY
+`;
+
+function getYouTubeId(url) {
+  let regex = /youtube\.com\/shorts\/([^?&\/]+)/;
+  let match = url.match(regex);
+  if (match) return match[1];
+
+  regex = /(?:youtube\.com\/(?:.*v=|live\/)|youtu\.be\/)([^&?/]+)/;
+  match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+const videoUrls = channelsData
+  .trim()
+  .split(/\s+/)
+  .filter((url) => url.startsWith('http'));
+
+const playerPage = document.getElementById('playerPage');
+const videoIds = videoUrls.map(getYouTubeId).filter(Boolean);
+let currentPlayingIndex = -1;
+
+function createVideoContainer(ytId, index) {
+  const container = document.createElement('div');
+  container.className = 'video-container';
+  container.dataset.index = index;
+
+  const poster = document.createElement('img');
+  poster.className = 'poster';
+  poster.src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+  poster.alt = 'صورة مصغرة للفيديو';
+  poster.style.display = 'block';
+
+  const iframe = document.createElement('iframe');
+  iframe.dataset.index = index;
+  iframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=0&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&mute=0`;
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+  iframe.allowFullscreen = true;
+  iframe.onload = () => {
+    poster.style.display = 'none';
+  };
+
+  container.appendChild(poster);
+  container.appendChild(iframe);
+  return container;
+}
+
+function setIframeSrc(iframe, ytId, autoplay = false) {
+  const autoplayValue = autoplay ? 1 : 0;
+  iframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=${autoplayValue}&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&mute=0`;
+}
+
+function playVideo(index) {
+  if (currentPlayingIndex === index) return;
+  if (index < 0 || index >= videoIds.length) return;
+
+  if (currentPlayingIndex >= 0 && currentPlayingIndex < videoIds.length) {
+    const prevContainer = playerPage.querySelector(`.video-container[data-index="${currentPlayingIndex}"]`);
+    if (prevContainer) {
+      const prevIframe = prevContainer.querySelector('iframe');
+      if (prevIframe) {
+        setIframeSrc(prevIframe, videoIds[currentPlayingIndex], false);
+      }
+    }
+  }
+
+  const container = playerPage.querySelector(`.video-container[data-index="${index}"]`);
+  if (container) {
+    const iframe = container.querySelector('iframe');
+    if (iframe) {
+      setIframeSrc(iframe, videoIds[index], true);
+      currentPlayingIndex = index;
+    }
+  }
+}
+
+function pauseCurrentVideo() {
+  if (currentPlayingIndex < 0 || currentPlayingIndex >= videoIds.length) return;
+  const container = playerPage.querySelector(`.video-container[data-index="${currentPlayingIndex}"]`);
+  if (!container) return;
+  const iframe = container.querySelector('iframe');
+  if (iframe) {
+    setIframeSrc(iframe, videoIds[currentPlayingIndex], false);
+  }
+}
+
+const observer = new IntersectionObserver(
+  (entries) => {
+    let bestIndex = -1;
+    let bestRatio = 0;
+
+    entries.forEach((entry) => {
+      const index = Number(entry.target.dataset.index);
+      if (entry.intersectionRatio > bestRatio) {
+        bestRatio = entry.intersectionRatio;
+        bestIndex = index;
+      }
+    });
+
+    if (bestIndex >= 0 && bestIndex !== currentPlayingIndex && bestRatio >= 0.55) {
+      playVideo(bestIndex);
+    }
+  },
+  {
+    root: playerPage,
+    threshold: [0.25, 0.55, 0.75, 0.95],
+  }
+);
+
+videoIds.forEach((ytId, index) => {
+  const container = createVideoContainer(ytId, index);
+  playerPage.appendChild(container);
+  observer.observe(container);
+});
+
+window.addEventListener('load', () => {
+  if (videoIds.length > 0) {
+    playVideo(0);
+  }
+});
+
+window.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pauseCurrentVideo();
+  }
+});
+</script>
+
+</body>
+</html>
