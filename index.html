@@ -69,9 +69,11 @@ html,body{
 
 <script>
 const channelsData = `
+https://www.youtube.com/shorts/hpVtQjla9_c
 https://www.youtube.com/shorts/hcjoqVCqKbc
 https://www.youtube.com/shorts/UfTCtmOZd7o
 https://www.youtube.com/shorts/qSeEjuamYdY
+
 
 `;
 
@@ -119,9 +121,10 @@ function createVideoContainer(ytId, index) {
   return container;
 }
 
-function setIframeSrc(iframe, ytId, autoplay = false) {
+function setIframeSrc(iframe, ytId, autoplay = false, mute = true) {
   const autoplayValue = autoplay ? 1 : 0;
-  iframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=${autoplayValue}&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&mute=0`;
+  const muteValue = mute ? 1 : 0;
+  iframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=${autoplayValue}&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&mute=${muteValue}`;
 }
 
 function playVideo(index) {
@@ -133,7 +136,7 @@ function playVideo(index) {
     if (prevContainer) {
       const prevIframe = prevContainer.querySelector('iframe');
       if (prevIframe) {
-        setIframeSrc(prevIframe, videoIds[currentPlayingIndex], false);
+        setIframeSrc(prevIframe, videoIds[currentPlayingIndex], false, true);
       }
     }
   }
@@ -142,7 +145,7 @@ function playVideo(index) {
   if (container) {
     const iframe = container.querySelector('iframe');
     if (iframe) {
-      setIframeSrc(iframe, videoIds[index], true);
+      setIframeSrc(iframe, videoIds[index], true, false);
       currentPlayingIndex = index;
     }
   }
@@ -154,7 +157,7 @@ function pauseCurrentVideo() {
   if (!container) return;
   const iframe = container.querySelector('iframe');
   if (iframe) {
-    setIframeSrc(iframe, videoIds[currentPlayingIndex], false);
+    setIframeSrc(iframe, videoIds[currentPlayingIndex], false, true);
   }
 }
 
